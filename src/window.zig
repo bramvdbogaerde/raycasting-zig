@@ -59,4 +59,11 @@ pub const Window = struct {
             }
         }
     }
+
+    /// Free's up the resources from SDL
+    pub fn deinit(self: *Window) void {
+        _ = sdl.SDL_DestroyWindowSurface(self.sdl_window);
+        _ = sdl.SDL_DestroyWindow(self.sdl_window);
+        _ = allocator.destroy(self);
+    }
 };

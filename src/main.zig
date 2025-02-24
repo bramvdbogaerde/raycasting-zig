@@ -13,6 +13,7 @@ pub fn main() !void {
     game_window.commit();
 
     try game_window.main_loop();
+    game_window.deinit();
 }
 
 test "simple test" {
