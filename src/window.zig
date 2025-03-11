@@ -10,7 +10,7 @@ pub const Direction = enum { Up, Down, Left, Right };
 pub fn KeyHandler(comptime S: type) type {
     return struct {
         const Self = @This();
-        handler: *const fn (*Self, *Window(S), u64) void,
+        handler: *const fn (*Self, *Window(S), i32) void,
         state: *S,
     };
 }
@@ -27,6 +27,8 @@ pub fn Window(comptime S: type) type {
         sdl_window: *sdl.SDL_Window,
         /// Reference to the current SDL surface (and its pixels)
         sdl_surface: *sdl.SDL_Surface,
+        /// Reference to the current SDL renderer
+        sdl_renderer: *sdl.SDL_Renderer,
         /// Reference to the pixels on the SDL surface
         sdl_pixels: [*]u32,
         /// A function that gets called on every key press
@@ -45,11 +47,15 @@ pub fn Window(comptime S: type) type {
             win.height = h;
             win.width = w;
             win.sdl_window = sdl.SDL_CreateWindow("Game", 0, 0, @intCast(w), @intCast(h), 0).?;
-            win.sdl_surface = sdl.SDL_GetWindowSurface(win.sdl_window);
+            // TODO: renable this whenever we return to bitmap drawing
+            // win.sdl_surface = sdl.SDL_GetWindowSurface(win.sdl_window);
+            win.sdl_surface = undefined;
+            win.sdl_renderer = sdl.SDL_CreateRenderer(win.sdl_window, -1, 0).?;
+
             // Ensure that we have 4 bytes pr pixel (i.e., RGBA)
-            std.debug.assert(win.sdl_surface.format.*.BytesPerPixel == 4);
+            // std.debug.assert(win.sdl_surface.format.*.BytesPerPixel == 4);
             // store a reference to the pixel buffer of the surface
-            win.sdl_pixels = @alignCast(@ptrCast(win.sdl_surface.pixels));
+            // win.sdl_pixels = @alignCast(@ptrCast(win.sdl_surface.pixels));
             return win;
         }
 
@@ -58,34 +64,44 @@ pub fn Window(comptime S: type) type {
             self.on_key_press = on_key_fn;
         }
 
-        /// Set a pixel at a particular location
-        pub fn set_pixel(self: *@This(), x: usize, y: usize, r: u8, g: u8, b: u8) void {
-            const idx = x + (y * self.width);
-            self.sdl_pixels[idx] = sdl.SDL_MapRGBA(self.sdl_surface.format, r, g, b, 255);
-        }
+        // Set a pixel at a particular location
+        // pub fn set_pixel(self: *@This(), x: usize, y: usize, r: u8, g: u8, b: u8) void {
+        //     const idx = x + (y * self.width);
+        //     self.sdl_pixels[idx] = sdl.SDL_MapRGBA(self.sdl_surface.format, r, g, b, 255);
+        // }
 
-        /// Draw a horizontal line starting at the given position
-        /// and length
-        pub fn draw_hline(self: *@This(), x: usize, y: usize, length: usize) void {
-            for (x..x + length) |i| {
-                self.set_pixel(i, y, 255, 255, 255);
-            }
-        }
+        // Draw a horizontal line starting at the given position
+        // and length
+        // pub fn draw_hline(self: *@This(), x: usize, y: usize, length: usize) void {
+        //     for (x..x + length) |i| {
+        //         self.set_pixel(i, y, 255, 255, 255);
+        //     }
+        // }
 
-        /// Draw a vertical line starting at the given position
-        /// and length
-        pub fn draw_vline(self: *@This(), x: usize, y: usize, length: usize) void {
-            for (y..y + length) |i| {
-                self.set_pixel(x, i, 255, 255, 255);
-            }
-        }
+        // Draw a vertical line starting at the given position
+        // and length
+        // pub fn draw_vline(self: *@This(), x: usize, y: usize, length: usize) void {
+        //     for (y..y + length) |i| {
+        //         self.set_pixel(x, i, 255, 255, 255);
+        //     }
+        // }
 
-        pub fn draw_rect(self: *@This(), x: usize, y: usize, width: usize, height: usize) void {
-            for (x..x + width) |cx| {
-                for (y..y + height) |cy| {
-                    self.set_pixel(cx, cy, 255, 255, 255);
-                }
-            }
+        // pub fn draw_rect(self: *@This(), x: usize, y: usize, width: usize, height: usize) void {
+        //     for (x..x + width) |cx| {
+        //         for (y..y + height) |cy| {
+        //             self.set_pixel(cx, cy, 255, 255, 255);
+        //         }
+        //     }
+        // }
+
+        /// Draw a line from the given x and y coordinates to the other
+        ///  x and y coordinates.
+        pub fn draw_line(self: *@This(), x1: usize, y1: usize, x2: usize, y2: usize) void {
+            _ = sdl.SDL_RenderClear(self.sdl_renderer);
+            _ = sdl.SDL_SetRenderDrawColor(self.sdl_renderer, 255, 255, 255, 255);
+            _ = sdl.SDL_RenderDrawLine(self.sdl_renderer, @intCast(x1), @intCast(y1), @intCast(x2), @intCast(y2));
+            _ = sdl.SDL_SetRenderDrawColor(self.sdl_renderer, 0, 0, 0, 0);
+            _ = sdl.SDL_RenderPresent(self.sdl_renderer);
         }
 
         /// Render the pixels to screen (send frame buffer to the GPU)
@@ -104,7 +120,7 @@ pub fn Window(comptime S: type) type {
                 while (sdl.SDL_PollEvent(&evt) != 0) {
                     switch (evt.type) {
                         sdl.SDL_QUIT => quit = true,
-                        sdl.SDL_KEYDOWN => self.on_key_press.handler(self.on_key_press, self, evt.key.keysym.scancode),
+                        sdl.SDL_KEYDOWN => self.on_key_press.handler(self.on_key_press, self, evt.key.keysym.sym),
                         else => continue,
                     }
                 }
