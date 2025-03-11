@@ -31,25 +31,25 @@ pub const Grid = struct {
         return self.walls[row * self.ncols + column];
     }
 
-    /// Render the grid visually to the given window
-    pub fn render(self: *Grid, win: *window.Window) void {
-        // Draw the horizontal lines of the grid
-        for (0..self.nrows) |r| {
-            win.draw_hline(0, r * self.cell_size, win.width);
-        }
+    // Render the grid visually to the given window
+    // pub fn render(self: *Grid, win: *window.Window) void {
+    //     // Draw the horizontal lines of the grid
+    //     for (0..self.nrows) |r| {
+    //         win.draw_hline(0, r * self.cell_size, win.width);
+    //     }
 
-        // Draw all the vertical lines
-        for (0..self.ncols) |c| {
-            win.draw_vline(c * self.cell_size, 0, win.height);
-        }
+    //     // Draw all the vertical lines
+    //     for (0..self.ncols) |c| {
+    //         win.draw_vline(c * self.cell_size, 0, win.height);
+    //     }
 
-        // Fill the cells that have walls
-        for (0..self.ncols) |c| {
-            for (0..self.nrows) |r| {
-                if (self.get_column_row(c, r) > 0) {
-                    win.draw_rect(c * self.cell_size, r * self.cell_size, self.cell_size, self.cell_size);
-                }
-            }
-        }
-    }
+    //     // Fill the cells that have walls
+    //     for (0..self.ncols) |c| {
+    //         for (0..self.nrows) |r| {
+    //             if (self.get_column_row(c, r) > 0) {
+    //                 win.draw_rect(c * self.cell_size, r * self.cell_size, self.cell_size, self.cell_size);
+    //             }
+    //         }
+    //     }
+    // }
 };
